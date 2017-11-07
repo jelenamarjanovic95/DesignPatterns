@@ -7,17 +7,20 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using RepositoryPattern.Models;
+using RepositoryPattern.DAL;
 
 namespace RepositoryPattern.Controllers
 {
     public class FacultyController : Controller
     {
-        private RepositoryPatternContext db = new RepositoryPatternContext();
+        //private RepositoryPatternContext db = new RepositoryPatternContext();
+        private UnitOfWork unitOfWork = new UnitOfWork();
 
         // GET: Faculty
         public ActionResult Index()
         {
-            return View(db.Faculties.ToList());
+            var faculty = unitOfWork.FacultyRepository.Get();
+            return View(faculty.ToList());
         }
 
         // GET: Faculty/Details/5
@@ -27,7 +30,8 @@ namespace RepositoryPattern.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Faculty faculty = db.Faculties.Find(id);
+
+            Faculty faculty = unitOfWork.FacultyRepository.GetByID(id);
             if (faculty == null)
             {
                 return HttpNotFound();
@@ -50,8 +54,8 @@ namespace RepositoryPattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Faculties.Add(faculty);
-                db.SaveChanges();
+                unitOfWork.FacultyRepository.Insert(faculty);
+                unitOfWork.Save();
                 return RedirectToAction("Index");
             }
 
@@ -65,7 +69,7 @@ namespace RepositoryPattern.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Faculty faculty = db.Faculties.Find(id);
+            Faculty faculty = unitOfWork.FacultyRepository.GetByID(id);
             if (faculty == null)
             {
                 return HttpNotFound();
@@ -82,8 +86,8 @@ namespace RepositoryPattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Entry(faculty).State = EntityState.Modified;
-                db.SaveChanges();
+                unitOfWork.FacultyRepository.Update(faculty);
+                unitOfWork.Save();
                 return RedirectToAction("Index");
             }
             return View(faculty);
@@ -96,7 +100,7 @@ namespace RepositoryPattern.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Faculty faculty = db.Faculties.Find(id);
+            Faculty faculty = unitOfWork.FacultyRepository.GetByID(id);
             if (faculty == null)
             {
                 return HttpNotFound();
@@ -109,9 +113,9 @@ namespace RepositoryPattern.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Faculty faculty = db.Faculties.Find(id);
-            db.Faculties.Remove(faculty);
-            db.SaveChanges();
+            Faculty faculty = unitOfWork.FacultyRepository.GetByID(id);
+            unitOfWork.FacultyRepository.Delete(faculty);
+            unitOfWork.Save();
             return RedirectToAction("Index");
         }
 
@@ -119,7 +123,7 @@ namespace RepositoryPattern.Controllers
         {
             if (disposing)
             {
-                db.Dispose();
+                unitOfWork.Dispose();
             }
             base.Dispose(disposing);
         }

@@ -8,17 +8,25 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using RepositoryPattern.Models;
+using RepositoryPattern.DAL;
 
 namespace RepositoryPattern.Controllers
 {
     public class StudentController : Controller
     {
-        private RepositoryPatternContext db = new RepositoryPatternContext();
+        //private RepositoryPatternContext db = new RepositoryPatternContext();
+
+        private IStudentRepository _studentRepository;
+
+        public StudentController()
+        {
+            this._studentRepository = new StudentRepository(new RepositoryPatternContext());
+        }
 
         // GET: Student
         public async Task<ActionResult> Index()
         {
-            return View(await db.Students.ToListAsync());
+            return View(await _studentRepository.GetStudents());
         }
 
         // GET: Student/Details/5
@@ -28,7 +36,7 @@ namespace RepositoryPattern.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Student student = await db.Students.FindAsync(id);
+            Student student = await _studentRepository.GetStudenttByID(id);
             if (student == null)
             {
                 return HttpNotFound();
@@ -51,8 +59,8 @@ namespace RepositoryPattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Students.Add(student);
-                await db.SaveChangesAsync();
+                _studentRepository.InsertStudent(student);
+                await _studentRepository.Save();
                 return RedirectToAction("Index");
             }
 
@@ -66,7 +74,7 @@ namespace RepositoryPattern.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Student student = await db.Students.FindAsync(id);
+            Student student = await _studentRepository.GetStudenttByID(id);
             if (student == null)
             {
                 return HttpNotFound();
@@ -83,8 +91,8 @@ namespace RepositoryPattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Entry(student).State = EntityState.Modified;
-                await db.SaveChangesAsync();
+                _studentRepository.UpdateStudent(student);
+                await _studentRepository.Save();
                 return RedirectToAction("Index");
             }
             return View(student);
@@ -97,7 +105,7 @@ namespace RepositoryPattern.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Student student = await db.Students.FindAsync(id);
+            Student student = await _studentRepository.GetStudenttByID(id);
             if (student == null)
             {
                 return HttpNotFound();
@@ -110,9 +118,9 @@ namespace RepositoryPattern.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id)
         {
-            Student student = await db.Students.FindAsync(id);
-            db.Students.Remove(student);
-            await db.SaveChangesAsync();
+            Student student = await _studentRepository.GetStudenttByID(id);
+            _studentRepository.DeleteStudent(id);
+            await _studentRepository.Save();
             return RedirectToAction("Index");
         }
 
@@ -120,7 +128,7 @@ namespace RepositoryPattern.Controllers
         {
             if (disposing)
             {
-                db.Dispose();
+                _studentRepository.Dispose();
             }
             base.Dispose(disposing);
         }
